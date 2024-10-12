@@ -8,6 +8,7 @@ import (
 )
 
 var wg sync.WaitGroup
+var wgDeq sync.WaitGroup
 
 // var mu sync.Mutex
 
@@ -23,6 +24,8 @@ func (q *ConcQueue) enQueue(ele int32) {
 }
 
 func (q *ConcQueue) deQueue() int32 {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 	if len(q.queue) == 0 {
 		panic("Queue is Empty")
 	}
@@ -50,6 +53,14 @@ func main() {
 		}()
 	}
 	wg.Wait()
+	for i := 0; i < 1000000; i++ {
+		wgDeq.Add(1)
+		go func() {
+			q.deQueue()
+			wgDeq.Done()
+		}()
+	}
+	wgDeq.Wait()
 
 	fmt.Println(q.size())
 
